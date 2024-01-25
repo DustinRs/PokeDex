@@ -17,6 +17,7 @@ let typeClassMap = {
   ghost: "ghost",
   fairy: "fairy",
 };
+let initialCount = 25;
 
 async function loadAllPokemon() {
   let url = `https://pokeapi.co/api/v2/pokemon?limit=100000&offset=0`;
@@ -24,13 +25,73 @@ async function loadAllPokemon() {
   let responseAsJson = await response.json();
   let pokemons = responseAsJson["results"];
   renderAllPokemon(pokemons);
+  console.log(pokemons);
 }
+
 
 async function renderAllPokemon(pokemons) {
   let container = document.getElementById("allPokemonContainer");
+  let loadMoreButton = document.getElementById("loadMoreButton");
+  let loadMoreButtonAll = document.getElementById("loadMoreButtonAll");
+  let itemsToShow = initialCount;
+  
   container.innerHTML = "";
+  await renderPokemon(container, itemsToShow, pokemons);
+  
+  loadMoreButtonAll.style.display = itemsToShow < pokemons.length ? "block" : "none";
+  loadMoreButton.style.display = itemsToShow < pokemons.length ? "block" : "none";
+  
+  loadMoreButton.addEventListener("click", async () => {
+    await renderMorePokemon(container, pokemons, loadMoreButton, loadMoreButtonAll);
+    loadMoreButton.style.display = itemsToShow < pokemons.length ? "block" : "none";
+  });
+  loadMoreButtonAll.addEventListener("click", async () => {
+    await renderEveryPokemon(container, pokemons, loadMoreButtonAll, loadMoreButton);
+    loadMoreButtonAll.style.display = itemsToShow < pokemons.length ? "block" : "none";
+  });
+}
 
-  for (let i = 0; i < pokemons.length - 1141; i++) {
+async function renderEveryPokemon(container, pokemons, loadMoreButtonAll, loadMoreButton) {
+  loadMoreButtonAll.disabled = true;
+  loadMoreButton.disabled = true;
+  showCircle();
+  for (let i = initialCount; i < pokemons.length; i++) {
+    const pokemon = pokemons[i];
+    let imgurl = `https://pokeapi.co/api/v2/pokemon/${pokemon["name"]}`;
+    let imgresponse = await fetch(imgurl);
+    let allPokemon = await imgresponse.json();
+    let imgAllPokemon = allPokemon["sprites"]["other"]["official-artwork"]["front_default"];
+    let pokemonName = pokemon["name"];
+    let typeurl = `https://pokeapi.co/api/v2/pokemon/${i + 1}/`;
+    let typeresponse = await fetch(typeurl);
+    let typeresponseAsJson = await typeresponse.json();
+    let pokemonType = typeresponseAsJson["types"]["0"]["type"]["name"];
+    let capitalizedPokemonName = pokemonName.charAt(0).toUpperCase() + pokemonName.slice(1);
+    
+    container.innerHTML += `
+    <div onclick="loadPokemon('${pokemon["name"]}','${i}')" id="'${pokemon["name"]}'" class="divSmallCards ${pokemonType}">
+    <div class="divImgH2">
+    <img class="imgSmall" id="allPokemonImage${i}" src="${imgAllPokemon}" alt="" />
+    </div>
+    <div class="divh2">
+    <h2>${capitalizedPokemonName}</h2>
+    </div>
+    </div>`;
+  }
+  initialCount = initialCount + 25;
+setTimeout(() => {
+  loadMoreButtonAll.disabled = false;
+  loadMoreButton.disabled = false;
+  hideCircle();
+}, 1000);
+  
+}
+
+async function renderPokemon(container, itemsToShow, pokemons) {
+  loadMoreButton.disabled = true;
+  loadMoreButtonAll.disabled = true;
+  showCircle();
+  for (let i = 0; i < Math.min(pokemons.length, itemsToShow); i++) {
     const pokemon = pokemons[i];
     let imgurl = `https://pokeapi.co/api/v2/pokemon/${pokemon["name"]}`;
     let imgresponse = await fetch(imgurl);
@@ -44,17 +105,59 @@ async function renderAllPokemon(pokemons) {
     let pokemonType = typeresponseAsJson["types"]["0"]["type"]["name"];
     let capitalizedPokemonName =
       pokemonName.charAt(0).toUpperCase() + pokemonName.slice(1);
-    container.innerHTML += `<div onclick="loadPokemon('${pokemon["name"]}')" id="'${pokemon["name"]}'" class="divSmallCards ${pokemonType}"><div class="divImgH2"><img class="imgSmall" id="allPokemonImage${i}" src="${imgAllPokemon}" alt="" /></div><div class="divh2"><h2>${capitalizedPokemonName}</h2></div></div>`;
+    container.innerHTML += `<div onclick="loadPokemon('${pokemon["name"]}','${i}')" id="'${pokemon["name"]}'" class="divSmallCards ${pokemonType}"><div class="divImgH2"><img class="imgSmall" id="allPokemonImage${i}" src="${imgAllPokemon}" alt="" /></div><div class="divh2"><h2>${capitalizedPokemonName}</h2></div></div>`;
   }
+setTimeout(() => {
+  loadMoreButton.disabled = false;
+  loadMoreButtonAll.disabled = false;
+  hideCircle();
+}, 1000);
+  
 }
 
-async function loadPokemon(pokemonName) {
+async function renderMorePokemon(container, pokemons, loadMoreButton, loadMoreButtonAll) {
+  loadMoreButton.disabled = true;
+  loadMoreButtonAll.disabled = true;
+  showCircle();
+  for (let i = initialCount; i < Math.min(pokemons.length, initialCount + 25); i++) {
+    const pokemon = pokemons[i];
+    let imgurl = `https://pokeapi.co/api/v2/pokemon/${pokemon["name"]}`;
+    let imgresponse = await fetch(imgurl);
+    let allPokemon = await imgresponse.json();
+    let imgAllPokemon = allPokemon["sprites"]["other"]["official-artwork"]["front_default"];
+    let pokemonName = pokemon["name"];
+    let typeurl = `https://pokeapi.co/api/v2/pokemon/${i + 1}/`;
+    let typeresponse = await fetch(typeurl);
+    let typeresponseAsJson = await typeresponse.json();
+    let pokemonType = typeresponseAsJson["types"]["0"]["type"]["name"];
+    let capitalizedPokemonName = pokemonName.charAt(0).toUpperCase() + pokemonName.slice(1);
+    
+    container.innerHTML += `
+    <div onclick="loadPokemon('${pokemon["name"]}','${i}')" id="'${pokemon["name"]}'" class="divSmallCards ${pokemonType}">
+    <div class="divImgH2">
+    <img class="imgSmall" id="allPokemonImage${i}" src="${imgAllPokemon}" alt="" />
+    </div>
+    <div class="divh2">
+    <h2>${capitalizedPokemonName}</h2>
+    </div>
+    </div>`;
+  }
+  initialCount = initialCount + 25;
+  setTimeout(() => {
+    loadMoreButton.disabled = false;
+  loadMoreButtonAll.disabled = false;
+  hideCircle();
+  }, 1000);
+  
+}
+
+
+async function loadPokemon(pokemonName, id) {
   let url = `https://pokeapi.co/api/v2/pokemon/${pokemonName}`;
   let response = await fetch(url);
   currentPokemon = await response.json();
-
+  showPokemon(id);
   renderPokemonInfo(pokemonName);
-  showPokemon();
 }
 
 function renderPokemonInfo(pokemonName) {
@@ -66,24 +169,23 @@ function renderPokemonInfo(pokemonName) {
   renderMoves(pokemonName);
 }
 
-function showPokemon() {
+function showPokemon(id) {
   document.getElementById("pokedex").classList.add("d-block");
   document.getElementById("pokedex").classList.remove("d-none");
   document.getElementById("allPokemonContainer").classList.add("d-none");
+  document.getElementById("footer").classList.add("d-none");
+  let container = document.getElementById("pokedex");
+  container.innerHTML = renderSinglePokemon(id);
 }
 
 function closePokemon() {
   document.getElementById("pokedex").classList.remove("d-block");
   document.getElementById("pokedex").classList.add("d-none");
   document.getElementById("allPokemonContainer").classList.remove("d-none");
-}
+  document.getElementById("footer").classList.remove("d-none");
 
-function nextPokemon() {
-  // noch zu machen wenn gewollt
-}
-
-function previousPokemon() {
-  // noch zu machen wenn gewollt
+  let container = document.getElementById("pokedex");
+  container.innerHTML = "";
 }
 
 function renderAbout() {
@@ -158,7 +260,6 @@ function renderEvolutions() {
 function renderMoves(pokemonName) {
   if (pokemonName === "ditto") {
     movesDitto();
-    
   } else {
     movesOthers();
   }
@@ -166,31 +267,31 @@ function renderMoves(pokemonName) {
 
 function movesDitto() {
   let pokemonMove1 = currentPokemon["moves"]["0"]["move"]["name"];
-    let capitalizedPokemonMove1 =
-      pokemonMove1.charAt(0).toUpperCase() + pokemonMove1.slice(1);
-    document.getElementById("Move1").innerHTML = capitalizedPokemonMove1;
-    document.getElementById("Move2").innerHTML = '';
-    document.getElementById("Move3").innerHTML = '';
-    document.getElementById("Move4").innerHTML = '';
+  let capitalizedPokemonMove1 =
+    pokemonMove1.charAt(0).toUpperCase() + pokemonMove1.slice(1);
+  document.getElementById("Move1").innerHTML = capitalizedPokemonMove1;
+  document.getElementById("Move2").innerHTML = "";
+  document.getElementById("Move3").innerHTML = "";
+  document.getElementById("Move4").innerHTML = "";
 }
 
 function movesOthers() {
   let pokemonMove1 = currentPokemon["moves"]["0"]["move"]["name"];
-    let capitalizedPokemonMove1 =
-      pokemonMove1.charAt(0).toUpperCase() + pokemonMove1.slice(1);
-    let pokemonMove2 = currentPokemon["moves"]["1"]["move"]["name"];
-    let capitalizedPokemonMove2 =
-      pokemonMove2.charAt(0).toUpperCase() + pokemonMove2.slice(1);
-    let pokemonMove3 = currentPokemon["moves"]["2"]["move"]["name"];
-    let capitalizedPokemonMove3 =
-      pokemonMove3.charAt(0).toUpperCase() + pokemonMove3.slice(1);
-    let pokemonMove4 = currentPokemon["moves"]["3"]["move"]["name"];
-    let capitalizedPokemonMove4 =
-      pokemonMove4.charAt(0).toUpperCase() + pokemonMove4.slice(1);
-    document.getElementById("Move1").innerHTML = capitalizedPokemonMove1;
-    document.getElementById("Move2").innerHTML = capitalizedPokemonMove2;
-    document.getElementById("Move3").innerHTML = capitalizedPokemonMove3;
-    document.getElementById("Move4").innerHTML = capitalizedPokemonMove4;
+  let capitalizedPokemonMove1 =
+    pokemonMove1.charAt(0).toUpperCase() + pokemonMove1.slice(1);
+  let pokemonMove2 = currentPokemon["moves"]["1"]["move"]["name"];
+  let capitalizedPokemonMove2 =
+    pokemonMove2.charAt(0).toUpperCase() + pokemonMove2.slice(1);
+  let pokemonMove3 = currentPokemon["moves"]["2"]["move"]["name"];
+  let capitalizedPokemonMove3 =
+    pokemonMove3.charAt(0).toUpperCase() + pokemonMove3.slice(1);
+  let pokemonMove4 = currentPokemon["moves"]["3"]["move"]["name"];
+  let capitalizedPokemonMove4 =
+    pokemonMove4.charAt(0).toUpperCase() + pokemonMove4.slice(1);
+  document.getElementById("Move1").innerHTML = capitalizedPokemonMove1;
+  document.getElementById("Move2").innerHTML = capitalizedPokemonMove2;
+  document.getElementById("Move3").innerHTML = capitalizedPokemonMove3;
+  document.getElementById("Move4").innerHTML = capitalizedPokemonMove4;
 }
 
 function toggleCategory(categoryId) {
